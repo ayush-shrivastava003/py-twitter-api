@@ -2,6 +2,17 @@
 
 A Twitter API wrapper for Python (that actually works - maybe).
 
+## table of contents
+
+* [set up a Twitter object](#set-up-a-twitter-object)
+* [getting authenticated](#getting-authenticated)
+    * [authentication URLs](#getting-an-authorization-url)
+    * [getting an access token](#getting-an-access-token)
+    * [refreshing tokens](#refreshing-an-access-token)
+    * [revoking tokens](#revoking-tokens)
+* [tweet-related methods](#tweet-related-methods)
+    * [sending tweets](#sending-tweets)
+
 # info for usage
 
 ## set up a Twitter object
@@ -19,7 +30,7 @@ my_app = Twitter(
 
 Default scopes are `tweet.read` and `users.read`. If you need more scopes, add `scopes = ["scope.1", "scope.2", ...]` to your `Twitter` object.
 
-Default redirect URI is `http://localhost/`. If the URI does not match this exactly (including the trailing `/`), add `redirect_uri = "http://my_redirect_uri.com"` to your `Twitter` object.
+Default redirect URI is `http://localhost/`. If the URI in your application settings does not match this exactly (including the trailing `/`), add `redirect_uri = "http://my_redirect_uri.com"` to your `Twitter` object.
 
 ## getting authenticated
 
@@ -77,10 +88,46 @@ Sending tweets requires the following scopes:
 * `tweet.write`
 * `users.read`
 
-Call `send_tweet()`:
+To start sending a Tweet, call `Tweet()`:
 
-```
-my_app.send_tweet("Hello, world!") # {"data": {"id": ...}}
+```py
+tweet = my_app.Tweet()
 ```
 
-*More features, including attachments, location information, Super Follower-exclusive tweets, polls, and more will be added soon.*
+This will return a `Tweet` object. Using this, you can add polls, reply to a thread, or quote a tweet.
+
+Adding some text:
+```py
+tweet.text("Hello, world!")
+```
+
+Start a poll. Specify the uptime of the poll in minutes, and the possible options:
+```py
+tweet.poll(120, ["answer 1", "answer 2"])
+```
+
+Quote a tweet:
+*Note: you cannot quote if you already have a poll set up!*
+```py
+tweet.quote_tweet("tweet_id")
+```
+
+Reply to a Tweet:
+```py
+tweet.reply("tweet_id")
+```
+
+Limit viewership to Super Followers:
+```py
+tweet.for_super_followers(True)
+```
+
+Add a location (only available if location settings are enabled in profile settings)
+```py
+tweet.location_info("place_id")
+```
+
+When you're ready to send your tweet, call `send()`:
+```py
+tweet.send()
+```

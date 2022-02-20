@@ -1,4 +1,3 @@
-from typing import Dict
 import requests
 from base64 import b64encode
 from urllib.parse import urlencode
@@ -45,7 +44,7 @@ class Twitter():
     def _random_str(self) -> str :
         return "".join(random.choice(ascii_letters) for _ in range(20))
 
-    def _handle_request(self, url, headers, data, wants_token=False) -> Dict:
+    def _handle_request(self, url, headers, data, wants_token=False) -> dict:
         res = requests.post(url, headers=headers, data=data)
         info = res.json()
     
@@ -77,7 +76,7 @@ class Twitter():
 
         return f"https://twitter.com/i/oauth2/authorize?{query_string}"
 
-    def get_access_token(self, callback_url: str) -> Dict:
+    def get_access_token(self, callback_url: str) -> dict:
         code = callback_url.split("&")[1].split("=")[1]
 
         data = {
@@ -90,7 +89,7 @@ class Twitter():
         
         return self._handle_request("https://api.twitter.com/2/oauth2/token", self.token_headers, data, True)
 
-    def get_refresh_token(self) -> Dict:
+    def get_refresh_token(self) -> dict:
         if not self.refresh_token:
             raise TwitterAPIError("You don't have a refresh token. It may have expired, been invalidated, or 'offline.access' is not in your scopes.")
 
@@ -108,7 +107,7 @@ class Twitter():
         if is_access_token:
             data["token"] = self.access_token
             data["token_type_hint"] = "access_token"
-        elif is_access_token and self.refresh_token != None:
+        elif not is_access_token and self.refresh_token != None:
             data["token"] = self.refresh_token
             data["token_type_hint"] = "refresh_token"
         
@@ -123,5 +122,57 @@ class Twitter():
             is_access_token = not is_access_token
             self.revoke_token(is_access_token=is_access_token)
 
-    def send_tweet(self, text: str) -> Dict:
-        return self._handle_request("https://api.twitter.com/2/tweets", self.request_headers, dumps({"text": text}))
+    def Tweet(self):
+        return Tweet(self)
+
+class Tweet():
+    def __init__(self, twitter_ref):
+        self.data = {}
+        self.twitter: Twitter = twitter_ref
+
+    def text(self, text: str):
+        self.data["text"] = text
+
+    def for_super_followers(self, for_super: bool):
+        self.data["for_super_followers_only"] = for_super
+
+    def location_info(self, place_id):
+        self.data["geo"] = {"place_id": place_id}
+
+    def poll(self, duration: int, options: list):
+        self.data["poll"] = {
+            "duration_minutes": duration,
+            "options": options
+        }
+
+    def quote_tweet(self, tweet_id: str):
+        self.data["quote_tweet_id"] = tweet_id
+
+    def reply(self, tweet_id: str, exclude: list = [], settings: str = None):
+        self.data["reply"] = {
+            "in_reply_to_tweet_id": tweet_id,
+            "exclude_reply_user_ids": exclude,
+        }
+
+        if settings != None:
+            self.data["reply_settings"] = settings
+
+    def remove(self, key):
+        del self.data[key]
+
+    def send(self):
+        return self.twitter._handle_request("https://api.twitter.com/2/tweets", self.twitter.request_headers, dumps(self.data))
+
+    # def upload_media(self, file_size, file_type, file_binary):
+    #     data = {
+    #         "command": "INIT",
+    #         "total_bytes": file_size,
+    #         "media_type": file_type,
+    #     }
+
+    #     init_media_data = self.twitter._handle_request("https://upload.twitter.com/1.1/media/upload.json", self.twitter.request_headers, data)
+
+    #     data = {
+
+    #     }
+
